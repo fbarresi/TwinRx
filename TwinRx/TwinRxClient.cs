@@ -5,7 +5,10 @@ using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Threading;
+using System.Threading.Tasks;
 using TwinCAT.Ads;
+using TwinRx.Interfaces;
 using TwinRx.Interfaces.Enums;
 
 namespace TwinRx
@@ -28,7 +31,7 @@ namespace TwinRx
     /// </code>
     /// </example>
     /// </summary>
-    public class TwinRxClient
+    public class TwinRxClient : ITwinRxClient
     {
         private TcAdsClient client;
         private IObservable<EventPattern<AdsNotificationExEventArgs>> notifications;
@@ -138,7 +141,6 @@ namespace TwinRx
         public IDisposable StreamTo<T>(string variableName, IObservable<T> observable, IScheduler scheduler = null)
         {
             scheduler = scheduler ?? Scheduler.Immediate;
-
             int variableHandle = client.CreateVariableHandle(variableName);
 
             var subscription = observable.ObserveOn(scheduler).Subscribe(value => WriteWithHandle(variableHandle, value));
@@ -164,17 +166,15 @@ namespace TwinRx
             return StreamTo(variableName, Observable.Return(value), scheduler);
         }
 
+        public async Task Write<T>(string variableName, T value, CancellationToken token)
+        {
+            int variableHandle = client.CreateVariableHandle(variableName);
+            await Task.Run(() => WriteWithHandle(variableHandle, value), token);
+        }
+
         private void WriteWithHandle<T>(int variableHandle, T value)
         {
-            if (typeof(T) == typeof(string))
-            {
-                // ReSharper disable once PossibleNullReferenceException
-                client.WriteAny(variableHandle, value, new[] { (value as string).Length });
-            }
-            else
-            {
-                client.WriteAny(variableHandle, value);
-            }
+            client.WriteAny(variableHandle, value);
         }
     }
 }

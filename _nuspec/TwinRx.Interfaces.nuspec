@@ -25,6 +25,8 @@
     <copyright>Copyright 2017</copyright>
     <tags>Rx System.Reactive TwinCAT ADS</tags>
     <dependencies>
+      <dependency id="System.Reactive.Interfaces" version="4.0" />
+
     </dependencies>
     <files>
       <file src="..\_out\Release\TwinRx.Interfaces.pdb" target="lib\Net45\TwinRx.Interfaces.pdb" />
