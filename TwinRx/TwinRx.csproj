@@ -68,7 +68,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\TwincatExtensions.cs" />
-    <Compile Include="NotificationRegistration.cs" />
     <Compile Include="ObservableExtensions.cs" />
     <Compile Include="TwinRxClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
