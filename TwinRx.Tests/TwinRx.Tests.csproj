@@ -104,6 +104,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\TwinRx.Interfaces\TwinRx.Interfaces.csproj">
+      <Project>{11BCD718-E58F-4A41-86F5-5FA1B0B95C63}</Project>
+      <Name>TwinRx.Interfaces</Name>
+    </ProjectReference>
     <ProjectReference Include="..\TwinRx\TwinRx.csproj">
       <Project>{14A37C9D-BD34-4A3E-8E9E-10749B5D7BD1}</Project>
       <Name>TwinRx</Name>

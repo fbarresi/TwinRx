@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using TwinCAT.Ads;
 using TwinRx;
+using TwinRx.Interfaces.Enums;
 
 namespace TestApplication
 {
@@ -30,7 +31,7 @@ namespace TestApplication
 
             var client = new TwinRxClient(adsClient);
 
-            var counter = client.ObservableFor<MyStruct>("MAIN.var5", 200);
+            var counter = client.ObservableFor<MyStruct>("MAIN.var5", TransmissionMode.OnChange, TimeSpan.Zero);
             var subscription = counter.Select(c => c.myInt + ":" + c.myBool).Subscribe(v => Console.WriteLine("Last 10 values were:" + String.Join(" - ", v)));
 
             //// Print out 10 values at a time

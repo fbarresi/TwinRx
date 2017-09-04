@@ -1,5 +1,6 @@
 ﻿using System;
 using TwinCAT.Ads;
+using TwinRx.Interfaces.Enums;
 using Xunit;
 
 namespace TwinRx.Tests
@@ -28,7 +29,7 @@ namespace TwinRx.Tests
         {
             // Create an observable for a PLC-updated variable
             client.Write<short>("MAIN.var3", 2);
-            var plcVar = client.ObservableFor<short>("MAIN.var3", 100);
+            var plcVar = client.ObservableFor<short>("MAIN.var3", TransmissionMode.OnChange, TimeSpan.Zero);
 
             var observer = new TestObserver<short>();
             plcVar.Subscribe(observer);
@@ -44,7 +45,7 @@ namespace TwinRx.Tests
         {
             // Create an observable for a PLC-updated variable
             client.Write("MAIN.var2", "abc");
-            var plcVar = client.ObservableFor<string>("MAIN.var2", 100);
+            var plcVar = client.ObservableFor<string>("MAIN.var2", TransmissionMode.OnChange, TimeSpan.Zero);
 
             var observer = new TestObserver<string>();
             plcVar.Subscribe(observer);
@@ -63,7 +64,7 @@ namespace TwinRx.Tests
             // Reset 
             client.Write(var6, new MyPlcStruct {myBool = false, myInt = 0});
 
-            var plcVar = client.ObservableFor<MyPlcStruct>(var6, 100);
+            var plcVar = client.ObservableFor<MyPlcStruct>(var6, TransmissionMode.OnChange, TimeSpan.Zero);
 
             var observer = new TestObserver<MyPlcStruct>();
             plcVar.Subscribe(observer);

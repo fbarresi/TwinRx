@@ -6,6 +6,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using TwinCAT.Ads;
+using TwinRx.Interfaces.Enums;
 
 namespace TwinRx
 {
@@ -30,8 +31,6 @@ namespace TwinRx
     public class TwinRxClient
     {
         private TcAdsClient client;
-        private readonly int defaultCycleTime;
-        private readonly int maxDelay;
         private IObservable<EventPattern<AdsNotificationExEventArgs>> notifications;
         readonly Subject<Unit> reconnectEvents = new Subject<Unit>();
 
@@ -39,13 +38,8 @@ namespace TwinRx
         /// Constructor
         /// </summary>
         /// <param name="client">TwinCAT ADS client. It should be connected</param>
-        /// <param name="defaultCycleTime">Default cycle time the ADS client will poll for changes</param>
-        /// <param name="maxDelay">Maximum ADS delay</param>
-        public TwinRxClient(TcAdsClient client, int defaultCycleTime = 100, int maxDelay = 100)
+        public TwinRxClient(TcAdsClient client)
         {
-            this.defaultCycleTime = defaultCycleTime;
-            this.maxDelay = maxDelay;
-
             OnIninitialize(client);
         }
 
@@ -111,12 +105,16 @@ namespace TwinRx
         /// </remarks>
         /// <typeparam name="T">.NET type of the variable</typeparam>
         /// <param name="variableName">The full name of the PLC variable, i.e. "MAIN.var1"</param>
-        /// <param name="cycleTime">Interval at which the ADS router will check the variable for changes (optional)</param>
+        /// <param name="mode">The transmission mode for the variable</param>
+        /// <param name="updateRate">Interval at which the ADS router will check the variable for changes (optional)</param>
         /// <returns>Observable that emits when the PLC variable changes</returns>
-        public IObservable<T> ObservableFor<T>(string variableName, int cycleTime = -1)
+        public IObservable<T> ObservableFor<T>(string variableName, TransmissionMode mode, TimeSpan updateRate)
         {
+            
+            var notificationRegistration = CreateNotificationRegistration<T>(variableName, mode, updateRate);
+
             return Observable.Using(
-                    () => CreateNotificationRegistration<T>(variableName, cycleTime),
+                    () =>notificationRegistration,
                     r => notifications
                             .Where(e => e.EventArgs.NotificationHandle == r.HandleId)
                             .Select(e => (T)e.EventArgs.Value)
@@ -126,23 +124,14 @@ namespace TwinRx
                 .RecreateOn(reconnectEvents);
         }
 
-        private NotificationRegistration CreateNotificationRegistration<T>(string variableName, int cycleTime)
+        private NotificationRegistration CreateNotificationRegistration<T>(string variableName, TransmissionMode mode, TimeSpan updateRate)
         {
-            return new NotificationRegistration(RegisterNotificationHandle<T>(variableName, cycleTime), client);
+            return new NotificationRegistration(RegisterNotificationHandle<T>(variableName, mode, updateRate), client);
         }
 
-        private int RegisterNotificationHandle<T>(string variableName, int cycleTime)
+        private int RegisterNotificationHandle<T>(string variableName, TransmissionMode mode, TimeSpan updateRate)
         {
-            cycleTime = cycleTime == -1 ? defaultCycleTime : cycleTime;
-
-            if (typeof(T) == typeof(string))
-            {
-                return client.AddDeviceNotificationEx(variableName, AdsTransMode.OnChange, cycleTime, maxDelay,
-                    null,
-                    typeof(T), new[] { 256 });
-            }
-            return client.AddDeviceNotificationEx(variableName, AdsTransMode.OnChange, cycleTime, maxDelay,
-                null, typeof(T));
+            return client.AddDeviceNotificationEx(variableName, (AdsTransMode) mode, (int) updateRate.TotalMilliseconds, 0, null, typeof(T));
         }
 
         /// <summary>

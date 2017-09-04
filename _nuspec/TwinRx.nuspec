@@ -24,5 +24,18 @@
     <releaseNotes></releaseNotes>
     <copyright>Copyright 2017</copyright>
     <tags>Rx System.Reactive TwinCAT ADS</tags>
+    <dependencies>
+      <dependency id="TwinCAT.Ads" version="4.0" />
+      <dependency id="System.Reactive.Core" version="4.0" />
+      <dependency id="System.Reactive.Interfaces" version="4.0" />
+      <dependency id="System.Reactive.Linq" version="4.0" />
+      <dependency id="System.Reactive.PlatformServices" version="4.0" />
+    </dependencies>
+    <files>
+      <file src="..\_out\Release\TwinRx.pdb" target="lib\Net45\TwinRx.pdb" />
+      <file src="..\_out\Release\TwinRx.dll" target="lib\Net45\TwinRx.dll" />
+      <file src="..\_out\Release\TwinRx.Interfaces.pdb" target="lib\Net45\TwinRx.Interfaces.pdb" />
+      <file src="..\_out\Release\TwinRx.Interfaces.dll" target="lib\Net45\TwinRx.Interfaces.dll" />
+    </files>
   </metadata>
 </package>
