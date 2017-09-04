@@ -111,22 +111,13 @@ namespace TwinRx
         public IObservable<T> ObservableFor<T>(string variableName, TransmissionMode mode, TimeSpan updateRate)
         {
             
-            var notificationRegistration = CreateNotificationRegistration<T>(variableName, mode, updateRate);
+            var notification = RegisterNotificationHandle<T>(variableName, mode, updateRate);
 
-            return Observable.Using(
-                    () =>notificationRegistration,
-                    r => notifications
-                            .Where(e => e.EventArgs.NotificationHandle == r.HandleId)
-                            .Select(e => (T)e.EventArgs.Value)
-                            .Replay()
-                            .RefCount()
-                )
-                .RecreateOn(reconnectEvents);
-        }
-
-        private NotificationRegistration CreateNotificationRegistration<T>(string variableName, TransmissionMode mode, TimeSpan updateRate)
-        {
-            return new NotificationRegistration(RegisterNotificationHandle<T>(variableName, mode, updateRate), client);
+            return notifications
+                    .Select(x => x.EventArgs)
+                    .Where(n => n.NotificationHandle == notification)
+                    .Select(n => (T) n.Value)
+                    .RecreateOn(reconnectEvents);
         }
 
         private int RegisterNotificationHandle<T>(string variableName, TransmissionMode mode, TimeSpan updateRate)
