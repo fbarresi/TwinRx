@@ -174,7 +174,7 @@ namespace TwinRx
         /// <param name="value">Value to write</param>
         /// <param name="token">A cancellation token</param>
         /// <returns></returns>
-        public async Task Write<T>(string variableName, T value, CancellationToken token)
+        public async Task WriteAsync<T>(string variableName, T value, CancellationToken token)
         {
             int variableHandle = client.CreateVariableHandle(variableName);
             await Task.Run(() => WriteWithHandle(variableHandle, value), token);

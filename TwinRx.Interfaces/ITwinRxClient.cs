@@ -11,7 +11,7 @@ namespace TwinRx.Interfaces
     {
         IObservable<T> ObservableFor<T>(string variableName, TransmissionMode mode, TimeSpan updateRate);
         IDisposable StreamTo<T>(string variableName, IObservable<T> observable, IScheduler scheduler = null);
-        Task Write<T>(string variableName, T value, CancellationToken token);
+        Task WriteAsync<T>(string variableName, T value, CancellationToken token);
         IDisposable Write<T>(string variableName, T value, IScheduler scheduler = null);
     }
 }
