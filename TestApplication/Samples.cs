@@ -28,7 +28,7 @@ namespace TestApplication
             var adsClient = new TcAdsClient();
             adsClient.Connect(851); // 801 for TwinCAT 2, 851 for TwinCAT 3
 
-            var client = new TwinCatRxClient(adsClient);
+            var client = new TwinRxClient(adsClient);
 
             var counter = client.ObservableFor<MyStruct>("MAIN.var5", 200);
             var subscription = counter.Select(c => c.myInt + ":" + c.myBool).Subscribe(v => Console.WriteLine("Last 10 values were:" + String.Join(" - ", v)));

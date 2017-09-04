@@ -7,14 +7,14 @@ namespace TwinRx.Tests
     public class ObservableForTests : IDisposable
     {
         private readonly TcAdsClient adsClient;
-        private TwinCatRxClient client;
+        private TwinRxClient client;
 
         public ObservableForTests()
         {
             adsClient = new TcAdsClient();
             adsClient.Connect(851);
 
-            client = new TwinCatRxClient(adsClient);
+            client = new TwinRxClient(adsClient);
         }
 
         public void Dispose()

@@ -8,14 +8,14 @@ namespace TwinRx.Tests
     public class StreamTests : IDisposable
     {
         private readonly TcAdsClient adsClient;
-        private TwinCatRxClient client;
+        private TwinRxClient client;
 
         public StreamTests()
         {
             adsClient = new TcAdsClient();
             adsClient.Connect(851);
 
-            client = new TwinCatRxClient(adsClient);
+            client = new TwinRxClient(adsClient);
         }
 
         public void Dispose()
