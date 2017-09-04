@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reactive.Subjects;
 using TwinCAT.Ads;
+using TwinRx.Interfaces.Enums;
 using Xunit;
 
 namespace TwinRx.Tests
@@ -8,14 +9,14 @@ namespace TwinRx.Tests
     public class StreamTests : IDisposable
     {
         private readonly TcAdsClient adsClient;
-        private TwinCatRxClient client;
+        private TwinRxClient client;
 
         public StreamTests()
         {
             adsClient = new TcAdsClient();
             adsClient.Connect(851);
 
-            client = new TwinCatRxClient(adsClient);
+            client = new TwinRxClient(adsClient);
         }
 
         public void Dispose()
@@ -31,7 +32,7 @@ namespace TwinRx.Tests
             client.Write<short>("MAIN.var3", 2);
 
             // Create an observable for a PLC-updated variable
-            var plcVar = client.ObservableFor<short>("MAIN.var3", 100);
+            var plcVar = client.ObservableFor<short>("MAIN.var3", TransmissionMode.OnChange, TimeSpan.Zero);
             var observer = new TestObserver<short>();
             plcVar.Subscribe(observer);
 
@@ -52,7 +53,7 @@ namespace TwinRx.Tests
             client.Write<short>("MAIN.var3", 2);
 
             // Create an observable for a PLC-updated variable
-            var plcVar = client.ObservableFor<short>("MAIN.var3", 100);
+            var plcVar = client.ObservableFor<short>("MAIN.var3", TransmissionMode.OnChange, TimeSpan.Zero);
             var observer = new TestObserver<short>();
             var subscription = plcVar.Subscribe(observer);
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using TwinCAT.Ads;
+using TwinRx.Interfaces.Enums;
 using Xunit;
 
 namespace TwinRx.Tests
@@ -7,14 +8,14 @@ namespace TwinRx.Tests
     public class ObservableForTests : IDisposable
     {
         private readonly TcAdsClient adsClient;
-        private TwinCatRxClient client;
+        private TwinRxClient client;
 
         public ObservableForTests()
         {
             adsClient = new TcAdsClient();
             adsClient.Connect(851);
 
-            client = new TwinCatRxClient(adsClient);
+            client = new TwinRxClient(adsClient);
         }
 
         public void Dispose()
@@ -27,7 +28,7 @@ namespace TwinRx.Tests
         public void ValueReceived()
         {
             // Create an observable for a PLC-updated variable
-            var observable = client.ObservableFor<short>("MAIN.var1", 100);
+            var observable = client.ObservableFor<short>("MAIN.var1", TransmissionMode.OnChange, TimeSpan.Zero);
 
             var observer = new TestObserver<short>();
             observable.Subscribe(observer);
@@ -39,7 +40,7 @@ namespace TwinRx.Tests
         public void InitialValueAvailableWithoutChange()
         {
             // Create an observable for a variable that is not updated by the PLC program
-            var observable = client.ObservableFor<short>("MAIN.var3", 100);
+            var observable = client.ObservableFor<short>("MAIN.var3", TransmissionMode.OnChange, TimeSpan.Zero);
 
             var observer = new TestObserver<short>();
             observable.Subscribe(observer);
@@ -51,14 +52,14 @@ namespace TwinRx.Tests
         public void ObservableCreatedOnSubscribe()
         {
             // Create an observable for a non-existing variable
-            client.ObservableFor<short>("MAIN.varNonExist", 100);
+            client.ObservableFor<short>("MAIN.varNonExist", TransmissionMode.OnChange, TimeSpan.Zero);
         }
 
         [Fact]
         public void ObservableCreatedOnSubscribeError()
         {
             // Create an observable for a non-existing variable
-            var observable = client.ObservableFor<short>("MAIN.varNonExist", 100);
+            var observable = client.ObservableFor<short>("MAIN.varNonExist", TransmissionMode.OnChange, TimeSpan.Zero);
 
             var observer = new TestObserver<short>();
             observable.Subscribe(observer);
@@ -70,7 +71,7 @@ namespace TwinRx.Tests
         public void StringObservable()
         {
             // Create an observable for a PLC-updated variable
-            var observable = client.ObservableFor<string>("MAIN.var2", 100);
+            var observable = client.ObservableFor<string>("MAIN.var2", TransmissionMode.OnChange, TimeSpan.Zero);
 
             var observer = new TestObserver<string>();
             observable.Subscribe(observer);
@@ -85,7 +86,7 @@ namespace TwinRx.Tests
         public void StructObservable()
         {
             // Create an observable for a PLC-updated variable
-            var observable = client.ObservableFor<MyPlcStruct>("MAIN.var5", 100);
+            var observable = client.ObservableFor<MyPlcStruct>("MAIN.var5", TransmissionMode.OnChange, TimeSpan.Zero);
 
             var observer = new TestObserver<MyPlcStruct>();
             observable.Subscribe(observer);

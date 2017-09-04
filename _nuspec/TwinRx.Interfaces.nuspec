@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>TwinRx</id>
+    <id>TwinRx.Interfaces</id>
     <version>$version$</version>
-    <title>TwinRx</title>
+    <title>TwinRx interfaces</title>
     <authors>S. Vroonland</authors>
     <owners>S. Vroonland</owners>
     <licenseUrl>https://raw.githubusercontent.com/svroonland/TwinRx/master/LICENSE</licenseUrl>
@@ -24,5 +24,13 @@
     <releaseNotes></releaseNotes>
     <copyright>Copyright 2017</copyright>
     <tags>Rx System.Reactive TwinCAT ADS</tags>
+    <dependencies>
+      <dependency id="System.Reactive.Interfaces" version="4.0" />
+
+    </dependencies>
+    <files>
+      <file src="..\_out\Release\TwinRx.Interfaces.pdb" target="lib\Net45\TwinRx.Interfaces.pdb" />
+      <file src="..\_out\Release\TwinRx.Interfaces.dll" target="lib\Net45\TwinRx.Interfaces.dll" />
+    </files>
   </metadata>
 </package>

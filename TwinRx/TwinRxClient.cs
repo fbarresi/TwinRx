@@ -5,7 +5,11 @@ using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Threading;
+using System.Threading.Tasks;
 using TwinCAT.Ads;
+using TwinRx.Interfaces;
+using TwinRx.Interfaces.Enums;
 
 namespace TwinRx
 {
@@ -27,35 +31,28 @@ namespace TwinRx
     /// </code>
     /// </example>
     /// </summary>
-    public class TwinCatRxClient
+    public class TwinRxClient : ITwinRxClient
     {
-        private TcAdsClient _client;
-        private readonly int _defaultCycleTime;
-        private readonly int _maxDelay;
-        private IObservable<EventPattern<AdsNotificationExEventArgs>> _notifications;
-        readonly Subject<Unit> _reconnectEvents = new Subject<Unit>();
+        private TcAdsClient client;
+        private IObservable<EventPattern<AdsNotificationExEventArgs>> notifications;
+        readonly Subject<Unit> reconnectEvents = new Subject<Unit>();
 
         /// <summary>
         /// Constructor
         /// </summary>
         /// <param name="client">TwinCAT ADS client. It should be connected</param>
-        /// <param name="defaultCycleTime">Default cycle time the ADS client will poll for changes</param>
-        /// <param name="maxDelay">Maximum ADS delay</param>
-        public TwinCatRxClient(TcAdsClient client, int defaultCycleTime = 100, int maxDelay = 100)
+        public TwinRxClient(TcAdsClient client)
         {
-            _defaultCycleTime = defaultCycleTime;
-            _maxDelay = maxDelay;
-
             OnIninitialize(client);
         }
 
         private void OnIninitialize(TcAdsClient client)
         {
-            _client = client;
-            _client.Synchronize = false; // This makes notifications come in on a ThreadPool thread instead of the UI thread
+            this.client = client;
+            this.client.Synchronize = false; // This makes notifications come in on a ThreadPool thread instead of the UI thread
 
-            _notifications = Observable.FromEventPattern<AdsNotificationExEventHandler, AdsNotificationExEventArgs>(
-                h => _client.AdsNotificationEx += h, h => _client.AdsNotificationEx -= h).Publish().RefCount();
+            notifications = Observable.FromEventPattern<AdsNotificationExEventHandler, AdsNotificationExEventArgs>(
+                h => this.client.AdsNotificationEx += h, h => this.client.AdsNotificationEx -= h).Publish().RefCount();
         }
 
         /// <summary>
@@ -69,7 +66,7 @@ namespace TwinRx
         public void Reconnect(TcAdsClient client)
         {
             OnIninitialize(client);
-            _reconnectEvents.OnNext(Unit.Default);
+            reconnectEvents.OnNext(Unit.Default);
         }
 
         /// <summary>
@@ -111,38 +108,24 @@ namespace TwinRx
         /// </remarks>
         /// <typeparam name="T">.NET type of the variable</typeparam>
         /// <param name="variableName">The full name of the PLC variable, i.e. "MAIN.var1"</param>
-        /// <param name="cycleTime">Interval at which the ADS router will check the variable for changes (optional)</param>
+        /// <param name="mode">The transmission mode for the variable</param>
+        /// <param name="updateRate">Interval at which the ADS router will check the variable for changes (optional)</param>
         /// <returns>Observable that emits when the PLC variable changes</returns>
-        public IObservable<T> ObservableFor<T>(string variableName, int cycleTime = -1)
+        public IObservable<T> ObservableFor<T>(string variableName, TransmissionMode mode, TimeSpan updateRate)
         {
-            return Observable.Using(
-                    () => CreateNotificationRegistration<T>(variableName, cycleTime),
-                    r => _notifications
-                            .Where(e => e.EventArgs.NotificationHandle == r.HandleId)
-                            .Select(e => (T)e.EventArgs.Value)
-                            .Replay()
-                            .RefCount()
-                )
-                .RecreateOn(_reconnectEvents);
+            
+            var notification = RegisterNotificationHandle<T>(variableName, mode, updateRate);
+
+            return notifications
+                    .Select(x => x.EventArgs)
+                    .Where(n => n.NotificationHandle == notification)
+                    .Select(n => (T) n.Value)
+                    .RecreateOn(reconnectEvents);
         }
 
-        private NotificationRegistration CreateNotificationRegistration<T>(string variableName, int cycleTime)
+        private int RegisterNotificationHandle<T>(string variableName, TransmissionMode mode, TimeSpan updateRate)
         {
-            return new NotificationRegistration(RegisterNotificationHandle<T>(variableName, cycleTime), _client);
-        }
-
-        private int RegisterNotificationHandle<T>(string variableName, int cycleTime)
-        {
-            cycleTime = cycleTime == -1 ? _defaultCycleTime : cycleTime;
-
-            if (typeof(T) == typeof(string))
-            {
-                return _client.AddDeviceNotificationEx(variableName, AdsTransMode.OnChange, cycleTime, _maxDelay,
-                    null,
-                    typeof(T), new[] { 256 });
-            }
-            return _client.AddDeviceNotificationEx(variableName, AdsTransMode.OnChange, cycleTime, _maxDelay,
-                null, typeof(T));
+            return client.AddDeviceNotificationEx(variableName, (AdsTransMode) mode, (int) updateRate.TotalMilliseconds, 0, null, typeof(T));
         }
 
         /// <summary>
@@ -158,13 +141,12 @@ namespace TwinRx
         public IDisposable StreamTo<T>(string variableName, IObservable<T> observable, IScheduler scheduler = null)
         {
             scheduler = scheduler ?? Scheduler.Immediate;
-
-            int variableHandle = _client.CreateVariableHandle(variableName);
+            int variableHandle = client.CreateVariableHandle(variableName);
 
             var subscription = observable.ObserveOn(scheduler).Subscribe(value => WriteWithHandle(variableHandle, value));
 
             // Return an IDisposable that, when disposed, stops listening to the Observable but also deletes the variable handle
-            return new CompositeDisposable(subscription, Disposable.Create(() => _client.DeleteVariableHandle(variableHandle)));
+            return new CompositeDisposable(subscription, Disposable.Create(() => client.DeleteVariableHandle(variableHandle)));
         }
 
         /// <summary>
@@ -184,17 +166,23 @@ namespace TwinRx
             return StreamTo(variableName, Observable.Return(value), scheduler);
         }
 
+        /// <summary>
+        /// Write a value on a PLC with async Task
+        /// </summary>
+        /// <typeparam name="T">Type of the value</typeparam>
+        /// <param name="variableName">Name of the PLC variable</param>
+        /// <param name="value">Value to write</param>
+        /// <param name="token">A cancellation token</param>
+        /// <returns></returns>
+        public async Task WriteAsync<T>(string variableName, T value, CancellationToken token)
+        {
+            int variableHandle = client.CreateVariableHandle(variableName);
+            await Task.Run(() => WriteWithHandle(variableHandle, value), token);
+        }
+
         private void WriteWithHandle<T>(int variableHandle, T value)
         {
-            if (typeof(T) == typeof(string))
-            {
-                // ReSharper disable once PossibleNullReferenceException
-                _client.WriteAny(variableHandle, value, new[] { (value as string).Length });
-            }
-            else
-            {
-                _client.WriteAny(variableHandle, value);
-            }
+            client.WriteAny(variableHandle, value);
         }
     }
 }
