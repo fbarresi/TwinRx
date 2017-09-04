@@ -166,6 +166,14 @@ namespace TwinRx
             return StreamTo(variableName, Observable.Return(value), scheduler);
         }
 
+        /// <summary>
+        /// Write a value on a PLC with async Task
+        /// </summary>
+        /// <typeparam name="T">Type of the value</typeparam>
+        /// <param name="variableName">Name of the PLC variable</param>
+        /// <param name="value">Value to write</param>
+        /// <param name="token">A cancellation token</param>
+        /// <returns></returns>
         public async Task Write<T>(string variableName, T value, CancellationToken token)
         {
             int variableHandle = client.CreateVariableHandle(variableName);
