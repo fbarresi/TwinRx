@@ -35,6 +35,7 @@
     <files>
       <file src="..\_out\Release\TwinRx.pdb" target="lib\Net45\TwinRx.pdb" />
       <file src="..\_out\Release\TwinRx.dll" target="lib\Net45\TwinRx.dll" />
+      <file src="..\_out\Release\TwinRx.xml" target="lib\Net45\TwinRx.xml" />
     </files>
   </metadata>
 </package>
