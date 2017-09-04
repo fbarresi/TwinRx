@@ -15,6 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwinRx.Interfaces", "TwinRx
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_nuspec", "_nuspec", "{10A06222-FA3D-492F-A6FC-7C78CAA22A91}"
 	ProjectSection(SolutionItems) = preProject
+		_nuspec\TwinRx.Interfaces.nuspec = _nuspec\TwinRx.Interfaces.nuspec
 		_nuspec\TwinRx.nuspec = _nuspec\TwinRx.nuspec
 	EndProjectSection
 EndProject
